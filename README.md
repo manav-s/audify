@@ -5,6 +5,9 @@ To start using the app:
 1. Start the frontend by simply running 'npm start'
 2. Start the backend by running 'python alchemy.py'
 
+![Image 1](images/image-1.png)
+![Image 2](images/image-2.png)
+
 ## How does alchemy.py work?
 
 This Python script is a Flask web application that optimizes a given Spotify playlist by minimizing the transition cost between songs. The transition cost is calculated based on the difference in various audio features of the songs. The app uses the Spotify API to fetch information about the songs and their audio features. The Flask server exposes a single API endpoint /optimize_playlist to accept a Spotify playlist link and return an optimized playlist.
