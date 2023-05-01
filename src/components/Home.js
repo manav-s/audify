@@ -106,6 +106,10 @@ const Home = () => {
             loading ? "blur" : ""
           }`}
         >
+          <button className="fixed top-[5%] right-[10%] bg-white text-black font-bold py-2 px-6 rounded-full">
+            Log in
+          </button>
+
           <h1 className="text-5xl font-bold mb-8 shadow-xl">Audify.</h1>
           <form onSubmit={handleSubmit} className="w-full max-w-md">
             <input
