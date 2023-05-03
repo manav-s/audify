@@ -3,7 +3,7 @@
 To start using the app:
 
 1. Start the frontend by simply running 'npm start'
-2. Start the backend by running 'python alchemy.py'
+2. Start the backend by running 'python kmeansprod.py'
 
 ![Image 1](images/image-1.png)
 ![Image 2](images/image-2.png)
