@@ -1,20 +1,35 @@
 import React, { useState, useEffect } from "react";
+import LoadingOverlay from "./LoadingOverlay";
 import SpotifyAuth from "./SpotifyAuth";
+import OptimizedPlaylist from "./OptimizedPlaylist";
+import ErrorDialog from "./ErrorDialog";
+import PlaylistForm from "./PlaylistForm";
 import axios from "axios";
 
-const Home = () => {
-  const [playlistLink, setPlaylistLink] = useState("");
-  const [open, setOpen] = useState(false);
-  const [errorOpen, setErrorOpen] = useState(false);
-  const [optimalPlaylist, setOptimalPlaylist] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingPhrase, setLoadingPhrase] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [refreshToken, setRefreshToken] = useState("");
+import { optimizePlaylist, reorderPlaylist, exchangeCodeForTokens} from "../utils/api";
 
+
+const Home = () => {
+  // Define states for the component
+  const [playlistLink, setPlaylistLink] = useState(""); // The link to the playlist to be optimized
+  const [open, setOpen] = useState(false); // Boolean to control the display of the optimized playlist
+  const [errorOpen, setErrorOpen] = useState(false); // Boolean to control the display of any errors
+  const [optimalPlaylist, setOptimalPlaylist] = useState([]); // The optimized playlist
+  const [loading, setLoading] = useState(false); // Boolean to control the display of a loading screen
+  const [loadingPhrase, setLoadingPhrase] = useState(""); // The phrase to be displayed while loading
+  const [accessToken, setAccessToken] = useState(""); // The access token for Spotify
+  const [refreshToken, setRefreshToken] = useState(""); // The refresh token for Spotify
+  const [cancelSource, setCancelSource] = useState(null); // The cancel token source for axios
+
+  // The function to be called when the form is submitted
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Create a new cancel token
+    const source = axios.CancelToken.source();
+    setCancelSource(source);
+
+    // Check if the playlist link is a valid URL
     if (!playlistLink || !isValidURL(playlistLink)) {
       setErrorOpen(true);
       return;
@@ -23,23 +38,33 @@ const Home = () => {
     // Call your Flask backend API to get the optimized playlist
     try {
       setLoading(true);
-      const response = await axios.post(
-        "http://localhost:5000/optimize_playlist",
-        {
-          playlist_link: playlistLink,
-        }
-      );
-
-      setOptimalPlaylist(response.data.optimal_playlist);
+      const response = await optimizePlaylist(playlistLink, source);
+      setOptimalPlaylist(response.optimal_playlist);
       setOpen(true);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching data:", error);
-      setErrorOpen(true);
+      // Handle request cancellation and other errors
+      if (axios.isCancel(error)) {
+        console.log("Request canceled:", error.message);
+      } else {
+        console.error("Error fetching data:", error);
+        setErrorOpen(true);
+      }
       setLoading(false);
     }
   };
 
+  // Cleanup function to cancel ongoing request when component unmounts
+  useEffect(() => {
+    return () => {
+      // If a request is ongoing, cancel it
+      if (cancelSource) {
+        cancelSource.cancel("Operation canceled by the user.");
+      }
+    };
+  }, [cancelSource]);
+
+  // Function to check if a given string is a valid URL
   function isValidURL(url) {
     try {
       new URL(url);
@@ -49,6 +74,7 @@ const Home = () => {
     }
   }
 
+  // Array of phrases to be displayed while loading
   const loadingPhrases = [
     "Calculating song key compatibility...",
     "Minimizing tempo differences...",
@@ -78,73 +104,55 @@ const Home = () => {
     "Curating the perfect setlist...",
   ];
 
+  // Function to close the optimized playlist view
   const handleClose = () => {
     setOpen(false);
     setPlaylistLink("");
   };
 
+  // Function to logout the user
   const handleLogout = () => {
     setAccessToken("");
     setRefreshToken("");
-    window.location = "http://localhost:3000";
+    window.open("https://www.spotify.com/logout", "_blank"); // Log out of Spotify in a new tab
+    window.location = "http://localhost:3000"; // Redirect the app to home
   };
 
+  // Function to modify the original playlist based on the optimized order
   const modifyPlaylist = async () => {
     try {
       const playlistId = playlistLink;
       const newUris = optimalPlaylist.map((song) => song.uri);
 
-      const response = await axios.post(
-        "http://localhost:5000/reorder_playlist",
-        {
-          playlist_id: playlistId,
-          new_uris: newUris,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await reorderPlaylist(playlistId, newUris, accessToken);
 
-      console.log(response.data);
+      console.log(response);
       alert("Playlist reordered successfully");
     } catch (error) {
       console.error("Error reordering playlist:", error);
-      alert("Error reordering playlist. Please try again. It may be a problem with your permissions!");
+      alert(
+        "Error reordering playlist. Please try again. It may be a problem with your permissions!"
+      );
     }
   };
 
+  // Function to close the error message view
   const handleErrorClose = () => {
     setErrorOpen(false);
     setPlaylistLink("");
   };
 
+  // Function to check if a user is logged in
   const isLoggedIn = () => {
     return accessToken !== "";
   };
 
+  // Function to handle the authorization code from Spotify and exchange it for access and refresh tokens
   const handleAuthCode = async (authCode) => {
     try {
-      const response = await axios.post(
-        "https://accounts.spotify.com/api/token",
-        null,
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Basic ${btoa(
-              `3519692942004325a2c7160c90717ca5:9243be1df96e48bb829c4b07254bd82c`
-            )}`,
-          },
-          params: {
-            grant_type: "authorization_code",
-            code: authCode,
-            redirect_uri: "http://localhost:3000",
-          },
-        }
-      );
+      const response = await exchangeCodeForTokens(authCode);
+      const { access_token, refresh_token } = response;
 
-      const { access_token, refresh_token } = response.data;
       console.log("Access Token:", access_token);
       console.log("Refresh Token:", refresh_token);
 
@@ -159,132 +167,70 @@ const Home = () => {
     }
   };
 
+  // A useEffect hook to control the loading phrase that is displayed
   useEffect(() => {
     if (loading) {
       let index = 0;
       const interval = setInterval(() => {
+        // Set a new loading phrase every second
         setLoadingPhrase(loadingPhrases[index % loadingPhrases.length]);
         index++;
       }, 1000);
-
+      // Clear the interval when the loading is done
       return () => clearInterval(interval);
     }
   }, [loading]);
 
+  // This is the main rendering of the page
   return (
     <>
+      {/* Container for the Spotify authorization and form input */}
       <div
         className={`container bg-gradient-to-r from-green-600 to-black shadow-lg max-w-full w-full mx-auto px-4 flex flex-col items-center justify-center min-h-screen text-white ${
           loading ? "blur" : ""
         }`}
       >
+        {/* Spotify authentication component */}
         <SpotifyAuth
-          callback={(authCode) => handleAuthCode(authCode)}
-          loggedIn={isLoggedIn()}
-          handleLogout={handleLogout}
+          callback={(authCode) => handleAuthCode(authCode)} // Function to handle authorization code
+          loggedIn={isLoggedIn()} // Check if user is logged in
+          handleLogout={handleLogout} // Function to handle user logout
         />
 
+        {/* Title of the application */}
         <h1 className="text-5xl font-bold mb-8 shadow-xl">Audify.</h1>
-        <form onSubmit={handleSubmit} className="w-full max-w-md">
-          <input
-            type="text"
-            className="block w-full py-2 px-4 mb-4 rounded border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 text-black"
-            placeholder="Playlist Link"
-            value={playlistLink}
-            onChange={(e) => setPlaylistLink(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="block w-full py-1 px-2 rounded bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
-          >
-            Optimize
-          </button>
-        </form>
+
+        {/* Form for submitting the playlist link */}
+        <PlaylistForm
+          playlistLink={playlistLink}
+          setPlaylistLink={setPlaylistLink}
+          handleSubmit={handleSubmit}
+        />
       </div>
 
+      {/* Loading overlay component that appears while the playlist is being optimized */}
       {loading && (
-        <div className="text-white fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-gray-800 p-8 rounded-lg">
-            <p>{loadingPhrase}</p>
-          </div>
-        </div>
+        <LoadingOverlay
+          loadingPhrase={loadingPhrase}
+          cancelLoading={() => {
+            if (cancelSource) {
+              cancelSource.cancel("Operation canceled by the user."); // Cancel the playlist optimization
+            }
+          }}
+        />
       )}
 
-      {open && (
-        <div className="fixed text-white inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-gray-800 p-8 rounded-lg w-[85%]">
-            <h2 className="text-3xl font-bold mb-4">
-              Optimized Playlist Order
-            </h2>
-            <div className="overflow-x-auto overflow-y-auto h-96">
-              <table className="table-fixed w-full">
-                <thead>
-                  <tr>
-                    <th className="w-[5%] text-left"></th>
-                    <th className="w-[10%] text-left"></th>
-                    <th className="w-[25%] text-left">Track Name</th>
-                    <th className="w-[15%] text-left">Artist</th>
-                    <th className="w-[20%] text-left">Album Name</th>
-                    <th className="w-[10%] text-left">Tempo (BPM)</th>
-                    <th className="w-[10%] text-left">Popularity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {optimalPlaylist.map((song, index) => (
-                    <tr key={song.position} className="mb-2">
-                      <td className="py-2">{index + 1}</td>
-                      <td>
-                        <img
-                          src={song.album_cover}
-                          alt={song.album_name}
-                          className="w-16 h-16"
-                        />
-                      </td>
-                      <td className="py-2">{song.track_name}</td>
-                      <td className="py-2">{song.artist}</td>
-                      <td className="py-2">{song.album_name}</td>
-                      <td className="py-2">{song.tempo}</td>
-                      <td className="py-2">{song.popularity}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {isLoggedIn() && (
-              <button
-                className="block mt-4 text-black ml-auto py-1 px-4 rounded-full bg-white hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-green-400"
-                onClick={modifyPlaylist}
-              >
-                Modify current playlist ordering
-              </button>
-            )}
-            <button
-              className="block mt-4 ml-auto py-1 px-4 rounded-full bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
-              onClick={handleClose}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Optimized playlist component that displays the optimized playlist */}
+      <OptimizedPlaylist
+        open={open}
+        optimalPlaylist={optimalPlaylist}
+        handleClose={handleClose}
+        isLoggedIn={isLoggedIn()}
+        modifyPlaylist={modifyPlaylist}
+      />
 
-      {errorOpen && (
-        <div className="fixed inset-0 text-white flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-gray-800 p-8 rounded-lg">
-            <h2 className="text-3xl font-bold mb-4">Error</h2>
-            <p>
-              Try a different playlist. Please make sure that the playlist is
-              public!
-            </p>
-            <button
-              className="block mt-4 ml-auto py-1 px-2 rounded bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-              onClick={handleErrorClose}
-            >
-              X
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Error message component that appears if an error occurs */}
+      {errorOpen && <ErrorDialog handleErrorClose={handleErrorClose} />}
     </>
   );
 };

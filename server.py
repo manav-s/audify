@@ -7,10 +7,33 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
 from sklearn.cluster import AgglomerativeClustering
+from spotipy.exceptions import SpotifyException
 import numpy as np
 
+
+def get_all_playlist_tracks(uri):
+    offset = 0
+    tracks = []
+
+    while True:
+        response = sp.playlist_tracks(uri, offset=offset)
+        tracks.extend(response["items"])
+
+        if response["next"]:
+            offset += len(response["items"])
+        else:
+            break
+
+    return tracks
+
+
 def get_song_data(track_id):
-    track = sp.track(track_id)
+    try:
+        track = sp.track(track_id)
+    except SpotifyException:
+        return None
+    if track['duration_ms'] == 0:
+        return None
     audio_features = sp.audio_features(track_id)[0]
     artist_id = track['artists'][0]['id']
     genres = get_related_artist_genres(artist_id)
@@ -20,6 +43,7 @@ def get_song_data(track_id):
     song_data['track_name'] = track['name']
     return song_data
 
+
 @lru_cache(maxsize=128)
 def get_related_artist_genres(artist_id):
     related_artists = sp.artist_related_artists(artist_id)
@@ -28,11 +52,13 @@ def get_related_artist_genres(artist_id):
         genres.extend(artist['genres'])
     return list(set(genres))
 
+
 def get_relative_key(key, mode):
     if mode == 1:  # Major key
         return (key + 9) % 12  # Relative minor key
     else:  # Minor key
         return (key + 3) % 12  # Relative major key
+
 
 def steps_in_circle_of_fifths(key1, key2):
     circle_of_fifths = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]
@@ -40,6 +66,7 @@ def steps_in_circle_of_fifths(key1, key2):
     index2 = circle_of_fifths.index(key2)
     steps = abs(index1 - index2)
     return min(steps, 12 - steps)
+
 
 def key_compatibility(key1, mode1, key2, mode2):
     if key1 == key2:
@@ -56,11 +83,13 @@ def key_compatibility(key1, mode1, key2, mode2):
 
     return False
 
+
 def genre_similarity(genres1, genres2):
     if not genres1 or not genres2:
         return 0
     shared_genres = len(set(genres1).intersection(genres2))
     return min(shared_genres, 5)
+
 
 def evaluate_transition(song1, song2):
     score = 0
@@ -70,7 +99,7 @@ def evaluate_transition(song1, song2):
         'danceability': 7,
         'energy': 5,
         'loudness': 1,
-        'tempo': 100,
+        'tempo': 150,
         'valence': 5,
         'genre': 4
     }
@@ -105,8 +134,10 @@ def evaluate_transition(song1, song2):
 
     return score
 
+
 def custom_distance(song1, song2):
     return evaluate_transition(song1, song2)
+
 
 def custom_clustering_algorithm(songs, n_clusters):
     # Calculate pairwise distances
@@ -124,6 +155,7 @@ def custom_clustering_algorithm(songs, n_clusters):
 
     return clusters
 
+
 app = Flask(__name__)
 CORS(app)
 
@@ -134,7 +166,42 @@ client_credentials_manager = SpotifyClientCredentials(
     client_id=cid, client_secret=secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
+# this is a path to reorder the playlist
+@app.route('/reorder_playlist', methods=['POST'])
+def reorder_playlist():
+    data = request.get_json()
+    playlist_id = data.get('playlist_id')
+    new_uris = data.get('new_uris')
 
+    if not playlist_id or not new_uris:
+        return {"error": "Invalid request. Please provide playlist_id and new_uris."}
+
+    # Get the user's access token from the request header
+    access_token = request.headers.get('Authorization')[
+        7:]  # Remove "Bearer " prefix
+
+    # Create a new Spotipy instance with the existing app credentials and the user's access token
+    sp_user = spotipy.Spotify(
+        client_credentials_manager=client_credentials_manager, auth=access_token)
+    
+    try:
+        # Clear the playlist
+        sp_user.playlist_replace_items(playlist_id, [])
+
+        # Split the uris into chunks of 100
+        uri_chunks = [new_uris[i:i + 100]
+                      for i in range(0, len(new_uris), 100)]
+
+        for chunk in uri_chunks:
+            sp_user.playlist_add_items(playlist_id, chunk)
+
+        return {"message": "Playlist reordered successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
+# this is a route to optimize the playlist that it is given
 @app.route('/optimize_playlist', methods=['POST'])
 def optimize_playlist():
     data = request.get_json()
@@ -143,12 +210,14 @@ def optimize_playlist():
         return jsonify({"error": "playlist_link is required"}), 400
 
     uri = playlist_link.split("/")[-1].split("?")[0]
-    track_uris = [x["track"]["uri"] for x in sp.playlist_tracks(uri)["items"]]
+    track_uris = [x["track"]["uri"] for x in get_all_playlist_tracks(uri)]
 
     # Fetch song data in parallel
     with ThreadPoolExecutor() as executor:
         song_data_map = {song: data for song, data in zip(
-            track_uris, executor.map(get_song_data, track_uris))}
+            track_uris, executor.map(get_song_data, track_uris)) if data is not None}
+
+    track_uris = list(song_data_map.keys())
 
     # Apply custom clustering algorithm
     n_clusters = min(8, len(track_uris))
@@ -169,7 +238,7 @@ def optimize_playlist():
         for song, _ in clustered_songs[cluster_id]:
             optimal_playlist.append(song)
 
-    # Build the response
+        # Build the response
     response_data = {
         "optimal_playlist": [],
     }
@@ -182,7 +251,12 @@ def optimize_playlist():
         track_name = track["name"]
         artist = track["artists"][0]["name"]
         album_name = track["album"]["name"]
-        album_cover = track["album"]["images"][0]["url"]
+        
+        try:
+            album_cover = track["album"]["images"][0]["url"]
+        except IndexError:
+            album_cover = None
+
         popularity = track["popularity"]
         tempo = song_data["tempo"]
         danceability = song_data["danceability"]
@@ -196,9 +270,11 @@ def optimize_playlist():
             "popularity": popularity,
             "tempo": tempo,
             "danceability": danceability,
+            "uri": song,  # Add this line to include the URI
         })
 
     return jsonify(response_data), 200
+
 
 if __name__ == "__main__":
     app.run(debug=True)
