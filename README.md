@@ -1,33 +1,69 @@
+Audify is a web application that optimizes Spotify playlists by minimizing the transition cost between songs. The transition cost is calculated based on the difference in various audio features of the songs. The application utilizes the Spotify API to fetch information about the songs and their audio features. This README provides an overview of the application, instructions to set it up, and details about its key components.
+
+![Image 1](images/image-1.png)
+
+## Key Features
+
+- Optimizes Spotify playlists for a seamless listening experience.
+- Considers attributes like key compatibility, genre similarity, danceability, energy, loudness, tempo, and valence.
+- Retrieves song data and audio features using the Spotify API.
+- Implements a custom clustering algorithm to group songs based on their transition cost.
+- Supports reordering of the original playlist based on the optimized order.
+
 ## Getting started
+
+### Prerequisites:
+Node.js and npm (Node Package Manager)
+Python 3.7 or higher
 
 To start using the app:
 
-1. Start the frontend by simply running 'npm start'
-2. Start the backend by running 'python kmeansprod.py'
+1. Clone the repository to your local machine: git clone <repository-url>
+2. Navigate to the project directory: cd audify
+3. Install the frontend dependencies: npm install
+4. Start the frontend by simply running 'npm start'
+5. Start the backend by running 'python server.py'
 
-![Image 1](images/image-1.png)
+
 ![Image 2](images/image-2.png)
 
-## How does alchemy.py work?
+## How does it work?
 
-This Python script is a Flask web application that optimizes a given Spotify playlist by minimizing the transition cost between songs. The transition cost is calculated based on the difference in various audio features of the songs. The app uses the Spotify API to fetch information about the songs and their audio features. The Flask server exposes a single API endpoint /optimize_playlist to accept a Spotify playlist link and return an optimized playlist.
+Audify is built using React for the frontend and Flask for the backend. The frontend provides a user interface to input the Spotify playlist link, while the backend handles the optimization process and interacts with the Spotify API.
+  
+## Frontend Components
+- LoadingOverlay: Displays a loading overlay while the playlist is being optimized.
+- SpotifyAuth: Handles Spotify authentication and provides login/logout functionality.
+- OptimizedPlaylist: Shows the optimized playlist with song details and offers the option to reorder the original playlist.
+- ErrorDialog: Displays an error message if any error occurs during the optimization process.
+- PlaylistForm: Renders the form to input the Spotify playlist link.
 
-### Key concepts and components:
+## Backend Components
+- get_all_playlist_tracks(uri): Retrieves all tracks in a Spotify playlist given its URI.
+- get_song_data(track_id): Fetches the track information and audio features for a given track ID using the Spotify API.
+- get_related_artist_genres(artist_id): Gets the genres of related artists for a given artist ID.
+- get_relative_key(key, mode): Calculates the relative major or minor key given the current key and mode.
+- key_compatibility(key1, mode1, key2, mode2): Checks if two keys are compatible based on their relative major or minor keys.
+- genre_similarity(genres1, genres2): Calculates the genre similarity between two songs based on the number of shared genres.
+- evaluate_transition(song1, song2): Calculates the transition cost between two songs based on various attributes.
+- custom_distance(song1, song2): Calculates the custom distance between two songs using the evaluate_transition function.
+- custom_clustering_algorithm(songs, n_clusters): Applies a custom clustering algorithm to group songs based on their transition cost.
+- reorder_playlist(): Handles the endpoint to reorder the original playlist based on the optimized order.
+- optimize_playlist(): Handles the endpoint to optimize a Spotify playlist by minimizing the transition cost between songs.
 
-1. get_relative_key(key, mode): A function that calculates the relative major or minor key given the current key and mode.
+## Usage
+- Open Audify in your web browser by visiting http://localhost:3000.
+- Click on the "Login with Spotify" button to authorize Audify to access your Spotify account.
+- Input the link to the Spotify playlist you want to optimize in the provided form and click the "Optimize Playlist" button.
 
-2. key_compatibility(key1, mode1, key2, mode2): A function that checks if two keys are compatible based on their relative major or minor keys.
+Audify will start optimizing the playlist by calculating the transition cost between songs and clustering them accordingly. Once the optimization is complete, Audify will display the optimized playlist with song details and the option to reorder the original playlist.
+To reorder the original playlist, click the "Reorder Playlist" button, and Audify will update the order of songs in your Spotify playlist.
 
-3. genre_similarity(genres1, genres2): A function that calculates genre similarity between two songs based on the number of shared genres.
+Enjoy your optimized playlist with minimized transition costs for a seamless listening experience!
 
-4. evaluate_transition(song1, song2): A function that calculates the transition cost between two songs based on various attributes such as key compatibility, genre similarity, danceability, energy, loudness, tempo, and valence.
+Contributions are welcome! If you have any ideas, improvements, or bug fixes, please submit a pull request or open an issue on GitHub.
 
-5. get_related_artist_genres(artist_id): A function that retrieves the genres of related artists for a given artist ID.
+### Acknowledgements
+This project was inspired by the desire to create a better listening experience by optimizing the order of songs in a playlist.
+The application utilizes the Spotify API to fetch song information and audio features.
 
-6. get_song_data(track_id): A function that fetches the track information and audio features for a given track ID.
-
-7. beam_search(songs, beam_width=3): A function that searches for an optimal playlist arrangement using the beam search algorithm, which is a heuristic search algorithm that explores a limited number of states at each level of the search tree. The algorithm returns the optimized playlist and its transition cost.
-
-8. optimize_playlist(): The main Flask route that handles incoming POST requests, takes a playlist link, and returns an optimized playlist with the desired attributes (position, track name, artist, album name, album cover, popularity, tempo (bpm), danceability, and energy) for each song.
-
-To use this application, run the script, which will start the Flask server. Then, send a POST request to the /optimize_playlist endpoint with the Spotify playlist link as input. The server will return a JSON response containing the optimized playlist and its transition cost.
