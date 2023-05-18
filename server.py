@@ -9,6 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 from sklearn.cluster import AgglomerativeClustering
 from spotipy.exceptions import SpotifyException
 import numpy as np
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_all_playlist_tracks(uri):
     offset = 0
@@ -158,8 +161,8 @@ def custom_clustering_algorithm(songs, n_clusters):
 app = Flask(__name__)
 CORS(app)
 
-cid = "3519692942004325a2c7160c90717ca5"
-secret = "9243be1df96e48bb829c4b07254bd82c"
+cid = os.getenv("CLIENT_ID")
+secret = os.getenv("CLIENT_SECRET")
 
 client_credentials_manager = SpotifyClientCredentials(
     client_id=cid, client_secret=secret)
