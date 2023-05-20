@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import LoadingOverlay from "./LoadingOverlay";
 import SpotifyAuth from "./SpotifyAuth";
 import OptimizedPlaylist from "./OptimizedPlaylist";
@@ -146,7 +146,7 @@ const Home = () => {
     return accessToken !== "";
   };
 
-  const handleAuthCode = async (authCode) => {
+  const handleAuthCode = useCallback(async (authCode) => {
     const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
     const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
     try {
@@ -179,7 +179,43 @@ const Home = () => {
         error
       );
     }
-  };
+  }, []);
+
+
+  // const handleAuthCode = async (authCode) => {
+  //   const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
+  //   const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
+  //   try {
+  //     const response = await axios.post(
+  //       "https://accounts.spotify.com/api/token",
+  //       null,
+  //       {
+  //         headers: {
+  //           "Content-Type": "application/x-www-form-urlencoded",
+  //           Authorization: `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
+  //         },
+  //         params: {
+  //           grant_type: "authorization_code",
+  //           code: authCode,
+  //           redirect_uri: "http://localhost:3000",
+  //         },
+  //       }
+  //     );
+
+  //     const { access_token, refresh_token } = response.data;
+  //     console.log("Access Token:", access_token);
+  //     console.log("Refresh Token:", refresh_token);
+
+  //     // Save the tokens in the state
+  //     setAccessToken(access_token);
+  //     setRefreshToken(refresh_token);
+  //   } catch (error) {
+  //     console.error(
+  //       "Error exchanging authorization code for access token:",
+  //       error
+  //     );
+  //   }
+  // };
 
   // A useEffect hook to control the loading phrase that is displayed
   useEffect(() => {
@@ -208,8 +244,14 @@ const Home = () => {
         }`}
       >
         {/* Spotify authentication component */}
-        <SpotifyAuth
+        {/* <SpotifyAuth
           callback={(authCode) => handleAuthCode(authCode)} // Function to handle authorization code
+          loggedIn={isLoggedIn()} // Check if user is logged in
+          handleLogout={handleLogout} // Function to handle user logout
+          accessToken={accessToken}
+        /> */}
+        <SpotifyAuth
+          callback={handleAuthCode} // Function to handle authorization code
           loggedIn={isLoggedIn()} // Check if user is logged in
           handleLogout={handleLogout} // Function to handle user logout
           accessToken={accessToken}
