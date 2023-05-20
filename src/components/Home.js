@@ -6,8 +6,7 @@ import ErrorDialog from "./ErrorDialog";
 import PlaylistForm from "./PlaylistForm";
 import axios from "axios";
 
-import { optimizePlaylist, reorderPlaylist, exchangeCodeForTokens} from "../utils/api";
-
+import { optimizePlaylist, reorderPlaylist } from "../utils/api";
 
 const Home = () => {
   // Define states for the component
@@ -147,7 +146,6 @@ const Home = () => {
     return accessToken !== "";
   };
 
-
   const handleAuthCode = async (authCode) => {
     const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
     const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
@@ -185,16 +183,19 @@ const Home = () => {
 
   // A useEffect hook to control the loading phrase that is displayed
   useEffect(() => {
+    let interval;
+
     if (loading) {
       let index = 0;
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         // Set a new loading phrase every second
         setLoadingPhrase(loadingPhrases[index % loadingPhrases.length]);
         index++;
       }, 1000);
-      // Clear the interval when the loading is done
-      return () => clearInterval(interval);
     }
+
+    // Clear the interval when the loading is done or component unmounts
+    return () => clearInterval(interval);
   }, [loading]);
 
   // This is the main rendering of the page
@@ -211,6 +212,7 @@ const Home = () => {
           callback={(authCode) => handleAuthCode(authCode)} // Function to handle authorization code
           loggedIn={isLoggedIn()} // Check if user is logged in
           handleLogout={handleLogout} // Function to handle user logout
+          accessToken={accessToken}
         />
 
         {/* Title of the application */}

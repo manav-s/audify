@@ -2,6 +2,8 @@ import axios from "axios";
 
 // Define the base URL for your API
 const API_BASE_URL = "http://localhost:5000";
+const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
+const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
 
 // Function to optimize a playlist
 export const optimizePlaylist = async (playlistLink, cancelSource) => {
@@ -30,24 +32,12 @@ export const reorderPlaylist = async (playlistId, newUris, accessToken) => {
   return response.data;
 };
 
-// Function to exchange Spotify authorization code for tokens
-export const exchangeCodeForTokens = async (authCode) => {
-  const response = await axios.post(
-    "https://accounts.spotify.com/api/token",
-    null,
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${btoa(
-          `3519692942004325a2c7160c90717ca5:9243be1df96e48bb829c4b07254bd82c`
-        )}`,
-      },
-      params: {
-        grant_type: "authorization_code",
-        code: authCode,
-        redirect_uri: "http://localhost:3000",
-      },
-    }
-  );
+// Function to get user's profile information
+export const getUserProfile = async (accessToken) => {
+  const response = await axios.get("https://api.spotify.com/v1/me", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
   return response.data;
 };
