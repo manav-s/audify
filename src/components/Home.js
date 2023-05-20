@@ -147,12 +147,28 @@ const Home = () => {
     return accessToken !== "";
   };
 
-  // Function to handle the authorization code from Spotify and exchange it for access and refresh tokens
-  const handleAuthCode = async (authCode) => {
-    try {
-      const response = await exchangeCodeForTokens(authCode);
-      const { access_token, refresh_token } = response;
 
+  const handleAuthCode = async (authCode) => {
+    const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
+    const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
+    try {
+      const response = await axios.post(
+        "https://accounts.spotify.com/api/token",
+        null,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
+          },
+          params: {
+            grant_type: "authorization_code",
+            code: authCode,
+            redirect_uri: "http://localhost:3000",
+          },
+        }
+      );
+
+      const { access_token, refresh_token } = response.data;
       console.log("Access Token:", access_token);
       console.log("Refresh Token:", refresh_token);
 
