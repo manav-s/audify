@@ -26,6 +26,7 @@ To start using the app:
 
 
 ![Image 2](images/image-2.png)
+![Image 3](images/image-3.png)
 
 ## How does it work?
 
