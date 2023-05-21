@@ -63,8 +63,8 @@ const SpotifyAuth = ({ callback, loggedIn, handleLogout, accessToken }) => {
         />
       )}
       {loggedIn && (
-        <span className="text-white font-bold text-sm pr-3">
-          Hi, {userName || "user"}
+        <span className="text-white text-lg font-bold pr-3">
+          Hi, {userName || "user"}.
         </span>
       )}
       <button

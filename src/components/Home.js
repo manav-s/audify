@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { InformationCircleIcon } from "@heroicons/react/outline";
+import InfoDialog from "./InfoDialog";
 import LoadingOverlay from "./LoadingOverlay";
 import SpotifyAuth from "./SpotifyAuth";
 import OptimizedPlaylist from "./OptimizedPlaylist";
@@ -20,6 +21,7 @@ const Home = () => {
   const [accessToken, setAccessToken] = useState(""); // The access token for Spotify
   const [refreshToken, setRefreshToken] = useState(""); // The refresh token for Spotify
   const [cancelSource, setCancelSource] = useState(null); // The cancel token source for axios
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false); // the boolean to open or close the information dialog
 
   // The function to be called when the form is submitted
   const handleSubmit = async (e) => {
@@ -229,7 +231,10 @@ const Home = () => {
           handleSubmit={handleSubmit}
         />
 
-        <InformationCircleIcon className="absolute bottom-4 h-10 w-10 text-white hover:text-slate-400" />
+        <InformationCircleIcon
+          onClick={() => setInfoDialogOpen(true)}
+          className="absolute bottom-4 h-10 w-10 text-white hover:text-slate-400"
+        />
       </div>
 
       {/* Loading overlay component that appears while the playlist is being optimized */}
@@ -255,6 +260,11 @@ const Home = () => {
 
       {/* Error message component that appears if an error occurs */}
       {errorOpen && <ErrorDialog handleErrorClose={handleErrorClose} />}
+
+      <InfoDialog
+        open={infoDialogOpen}
+        onClose={() => setInfoDialogOpen(false)}
+      />
     </>
   );
 };
