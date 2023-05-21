@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { InformationCircleIcon } from "@heroicons/react/outline";
 import LoadingOverlay from "./LoadingOverlay";
 import SpotifyAuth from "./SpotifyAuth";
 import OptimizedPlaylist from "./OptimizedPlaylist";
@@ -181,42 +182,6 @@ const Home = () => {
     }
   }, []);
 
-
-  // const handleAuthCode = async (authCode) => {
-  //   const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-  //   const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
-  //   try {
-  //     const response = await axios.post(
-  //       "https://accounts.spotify.com/api/token",
-  //       null,
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/x-www-form-urlencoded",
-  //           Authorization: `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
-  //         },
-  //         params: {
-  //           grant_type: "authorization_code",
-  //           code: authCode,
-  //           redirect_uri: "http://localhost:3000",
-  //         },
-  //       }
-  //     );
-
-  //     const { access_token, refresh_token } = response.data;
-  //     console.log("Access Token:", access_token);
-  //     console.log("Refresh Token:", refresh_token);
-
-  //     // Save the tokens in the state
-  //     setAccessToken(access_token);
-  //     setRefreshToken(refresh_token);
-  //   } catch (error) {
-  //     console.error(
-  //       "Error exchanging authorization code for access token:",
-  //       error
-  //     );
-  //   }
-  // };
-
   // A useEffect hook to control the loading phrase that is displayed
   useEffect(() => {
     let interval;
@@ -244,12 +209,6 @@ const Home = () => {
         }`}
       >
         {/* Spotify authentication component */}
-        {/* <SpotifyAuth
-          callback={(authCode) => handleAuthCode(authCode)} // Function to handle authorization code
-          loggedIn={isLoggedIn()} // Check if user is logged in
-          handleLogout={handleLogout} // Function to handle user logout
-          accessToken={accessToken}
-        /> */}
         <SpotifyAuth
           callback={handleAuthCode} // Function to handle authorization code
           loggedIn={isLoggedIn()} // Check if user is logged in
@@ -258,7 +217,10 @@ const Home = () => {
         />
 
         {/* Title of the application */}
-        <h1 className="text-5xl font-bold mb-8 shadow-xl">Audify.</h1>
+        <h1 className="text-5xl font-bold mb-4 shadow-xl">Audify.</h1>
+        <h2 className="mb-5 font-bold text-slate-300">
+          generate the perfect set with powerful machine learning algorithms
+        </h2>
 
         {/* Form for submitting the playlist link */}
         <PlaylistForm
@@ -266,6 +228,8 @@ const Home = () => {
           setPlaylistLink={setPlaylistLink}
           handleSubmit={handleSubmit}
         />
+
+        <InformationCircleIcon className="absolute bottom-4 h-10 w-10 text-white hover:text-slate-400" />
       </div>
 
       {/* Loading overlay component that appears while the playlist is being optimized */}
