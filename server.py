@@ -101,7 +101,7 @@ def evaluate_transition(song1, song2):
         'danceability': 7,
         'energy': 5,
         'loudness': 1,
-        'tempo': 150,
+        'tempo': 100,
         'valence': 5,
         'genre': 4
     }
@@ -276,123 +276,6 @@ def optimize_playlist():
         })
 
     return jsonify(response_data), 200
-
-# experimental features that still need to be tested:
-
-@app.route('/generate_warmup_set', methods=['POST'])
-def generate_warmup_set_route():
-    data = request.get_json()
-    playlist_link = data.get('playlist_link')
-    if not playlist_link:
-        return jsonify({"error": "playlist_link is required"}), 400
-
-    song_order = generate_warmup_set(playlist_link)
-    return jsonify({"song_order": song_order}), 200
-
-
-@app.route('/generate_peak_time_set', methods=['POST'])
-def generate_peak_time_set_route():
-    data = request.get_json()
-    playlist_link = data.get('playlist_link')
-    if not playlist_link:
-        return jsonify({"error": "playlist_link is required"}), 400
-
-    song_order = generate_peak_time_set(playlist_link)
-    return jsonify({"song_order": song_order}), 200
-
-
-@app.route('/generate_cool_down_set', methods=['POST'])
-def generate_cool_down_set_route():
-    data = request.get_json()
-    playlist_link = data.get('playlist_link')
-    if not playlist_link:
-        return jsonify({"error": "playlist_link is required"}), 400
-
-    song_order = generate_cool_down_set(playlist_link)
-    return jsonify({"song_order": song_order}), 200
-
-
-@app.route('/generate_journey_set', methods=['POST'])
-def generate_journey_set_route():
-    data = request.get_json()
-    playlist_link = data.get('playlist_link')
-    if not playlist_link:
-        return jsonify({"error": "playlist_link is required"}), 400
-
-    song_order = generate_journey_set(playlist_link)
-    return jsonify({"song_order": song_order}), 200
-
-
-@app.route('/generate_eclectic_set', methods=['POST'])
-def generate_eclectic_set_route():
-    data = request.get_json()
-    playlist_link = data.get('playlist_link')
-    if not playlist_link:
-        return jsonify({"error": "playlist_link is required"}), 400
-
-    song_order = generate_eclectic_set(playlist_link)
-    return jsonify({"song_order": song_order}), 200
-
-# Let's assume song_data_map and track_uris are available globally (experimental)
-def generate_warmup_set():
-    # For a warm-up set, songs should be more relaxed, so let's focus on lower energy and valence scores
-    warmup_songs = [song for song in song_data_map.values(
-    ) if song['energy'] < 0.4 and song['valence'] < 0.4]
-
-    # Apply custom clustering algorithm
-    n_clusters = min(8, len(warmup_songs))
-    clusters = custom_clustering_algorithm(warmup_songs, n_clusters)
-
-    # Return clustered and sorted songs
-    return sort_songs_by_cluster(clusters, warmup_songs)
-
-def generate_peak_time_set():
-    # For a peak-time set, we want high energy and danceability
-    peak_time_songs = [song for song in song_data_map.values(
-    ) if song['energy'] > 0.7 and song['danceability'] > 0.7]
-
-    # Apply custom clustering algorithm
-    n_clusters = min(8, len(peak_time_songs))
-    clusters = custom_clustering_algorithm(peak_time_songs, n_clusters)
-
-    # Return clustered and sorted songs
-    return sort_songs_by_cluster(clusters, peak_time_songs)
-
-def generate_cool_down_set():
-    # For a cool-down set, we want lower tempo and higher valence
-    cool_down_songs = [song for song in song_data_map.values(
-    ) if song['tempo'] < 100 and song['valence'] > 0.6]
-
-    # Apply custom clustering algorithm
-    n_clusters = min(8, len(cool_down_songs))
-    clusters = custom_clustering_algorithm(cool_down_songs, n_clusters)
-
-    # Return clustered and sorted songs
-    return sort_songs_by_cluster(clusters, cool_down_songs)
-
-def generate_journey_set():
-    # For a journey set, we want a variety of genres and energy levels
-    journey_songs = list(song_data_map.values())
-
-    # Apply custom clustering algorithm
-    n_clusters = min(8, len(journey_songs))
-    clusters = custom_clustering_algorithm(journey_songs, n_clusters)
-
-    # Return clustered and sorted songs
-    return sort_songs_by_cluster(clusters, journey_songs)
-
-def generate_eclectic_set():
-    # For an eclectic set, we want a mix of everything, so let's randomly select songs
-    eclectic_songs = random.sample(
-        list(song_data_map.values()), k=min(50, len(song_data_map)))
-
-    # Apply custom clustering algorithm
-    n_clusters = min(8, len(eclectic_songs))
-    clusters = custom_clustering_algorithm(eclectic_songs, n_clusters)
-
-    # Return clustered and sorted songs
-    return sort_songs_by_cluster(clusters, eclectic_songs)
-
 
 def sort_songs_by_cluster(clusters, songs):
     # Create a dictionary to store songs within each cluster
