@@ -203,53 +203,45 @@ const Home = () => {
 
   // This is the main rendering of the page
   return (
-    <>
-      {/* Container for the Spotify authorization and form input */}
-      <div
-        className={`container bg-gradient-to-r from-green-600 to-black shadow-lg max-w-full w-full mx-auto px-4 flex flex-col items-center justify-center min-h-screen text-white ${
-          loading ? "blur" : ""
-        }`}
-      >
-        {/* Spotify authentication component */}
+    <div className="overflow-hidden">
+      <div className="container w-screen bg-black text-white min-h-screen flex flex-col items-center justify-center m-0">
         <SpotifyAuth
-          callback={handleAuthCode} // Function to handle authorization code
-          loggedIn={isLoggedIn()} // Check if user is logged in
-          handleLogout={handleLogout} // Function to handle user logout
+          callback={handleAuthCode}
+          loggedIn={isLoggedIn()}
+          handleLogout={handleLogout}
           accessToken={accessToken}
         />
-
-        {/* Title of the application */}
-        <h1 className="text-5xl font-bold mb-4 shadow-xl">Audify.</h1>
-        <h2 className="mb-5 font-bold text-slate-300">
-          generate the perfect set with powerful machine learning algorithms
+  
+        <h1 className="text-5xl font-extrabold mb-4 text-green-400">
+          Audify.
+        </h1>
+        <h2 className="mb-8 font-bold text-slate-300 text-lg">
+          Generate the perfect set with powerful machine learning algorithms
         </h2>
-
-        {/* Form for submitting the playlist link */}
+  
         <PlaylistForm
           playlistLink={playlistLink}
           setPlaylistLink={setPlaylistLink}
           handleSubmit={handleSubmit}
         />
-
+  
         <InformationCircleIcon
           onClick={() => setInfoDialogOpen(true)}
-          className="absolute bottom-4 h-10 w-10 text-white hover:text-slate-400"
+          className="absolute bottom-4 h-10 w-10 text-white hover:text-green-400"
         />
       </div>
-
-      {/* Loading overlay component that appears while the playlist is being optimized */}
+  
       {loading && (
         <LoadingOverlay
           loadingPhrase={loadingPhrase}
           cancelLoading={() => {
             if (cancelSource) {
-              cancelSource.cancel("Operation canceled by the user."); // Cancel the playlist optimization
+              cancelSource.cancel("Operation canceled by the user.");
             }
           }}
         />
       )}
-
-      {/* Optimized playlist component that displays the optimized playlist */}
+  
       <OptimizedPlaylist
         open={open}
         optimalPlaylist={optimalPlaylist}
@@ -257,16 +249,15 @@ const Home = () => {
         isLoggedIn={isLoggedIn()}
         modifyPlaylist={modifyPlaylist}
       />
-
-      {/* Error message component that appears if an error occurs */}
+  
       {errorOpen && <ErrorDialog handleErrorClose={handleErrorClose} />}
-
+  
       <InfoDialog
         open={infoDialogOpen}
         onClose={() => setInfoDialogOpen(false)}
       />
-    </>
-  );
+    </div>
+  );  
 };
 
 export default Home;
