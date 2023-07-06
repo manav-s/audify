@@ -202,62 +202,60 @@ const Home = () => {
   }, [loading]);
 
   // This is the main rendering of the page
-  return (
-    <div className="overflow-hidden">
-      <div className="container w-screen bg-black text-white min-h-screen flex flex-col items-center justify-center m-0">
-        <SpotifyAuth
-          callback={handleAuthCode}
-          loggedIn={isLoggedIn()}
-          handleLogout={handleLogout}
-          accessToken={accessToken}
-        />
-  
-        <h1 className="text-5xl font-extrabold mb-4 text-green-400">
-          Audify.
-        </h1>
-        <h2 className="mb-8 font-bold text-slate-300 text-lg">
-          Generate the perfect set with powerful machine learning algorithms
-        </h2>
-  
-        <PlaylistForm
-          playlistLink={playlistLink}
-          setPlaylistLink={setPlaylistLink}
-          handleSubmit={handleSubmit}
-        />
-  
-        <InformationCircleIcon
-          onClick={() => setInfoDialogOpen(true)}
-          className="absolute bottom-4 h-10 w-10 text-white hover:text-green-400"
-        />
-      </div>
-  
-      {loading && (
-        <LoadingOverlay
-          loadingPhrase={loadingPhrase}
-          cancelLoading={() => {
-            if (cancelSource) {
-              cancelSource.cancel("Operation canceled by the user.");
-            }
-          }}
-        />
-      )}
-  
-      <OptimizedPlaylist
-        open={open}
-        optimalPlaylist={optimalPlaylist}
-        handleClose={handleClose}
-        isLoggedIn={isLoggedIn()}
-        modifyPlaylist={modifyPlaylist}
+  // Updated return part of Home component
+// Updated return part of Home component
+// Updated return part of Home component
+return (
+  <div className="overflow-hidden">
+    <div className="bg-black text-white min-h-screen flex flex-col items-center justify-center">
+      <SpotifyAuth
+        callback={handleAuthCode}
+        loggedIn={isLoggedIn()}
+        handleLogout={handleLogout}
+        accessToken={accessToken}
       />
-  
-      {errorOpen && <ErrorDialog handleErrorClose={handleErrorClose} />}
-  
-      <InfoDialog
-        open={infoDialogOpen}
-        onClose={() => setInfoDialogOpen(false)}
+
+      <h1 className="text-5xl font-extrabold mb-4 text-green-400">Audify.</h1>
+      <h2 className="mb-8 font-bold text-slate-300 text-lg">
+        Generate the perfect set with powerful machine learning algorithms
+      </h2>
+
+      <PlaylistForm
+        playlistLink={playlistLink}
+        setPlaylistLink={setPlaylistLink}
+        handleSubmit={handleSubmit}
+      />
+
+      <InformationCircleIcon
+        onClick={() => setInfoDialogOpen(true)}
+        className="absolute bottom-4 h-10 w-10 text-white hover:text-green-400"
       />
     </div>
-  );  
+
+    {loading && !open && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
+          <h3 className="text-white text-xl ml-4">Optimizing Playlist...</h3>
+        </div>
+      </div>
+    )}
+
+    <OptimizedPlaylist
+      open={open}
+      optimalPlaylist={optimalPlaylist}
+      handleClose={handleClose}
+      isLoggedIn={isLoggedIn()}
+      modifyPlaylist={modifyPlaylist}
+    />
+
+    {errorOpen && <ErrorDialog handleErrorClose={handleErrorClose} />}
+
+    <InfoDialog open={infoDialogOpen} onClose={() => setInfoDialogOpen(false)} />
+  </div>
+);
+
+
 };
 
 export default Home;
