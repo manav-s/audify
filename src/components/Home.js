@@ -164,7 +164,7 @@ const Home = () => {
           params: {
             grant_type: "authorization_code",
             code: authCode,
-            redirect_uri: "http://localhost:3000",
+            redirect_uri: "http://localhost:3000/home",
           },
         }
       );

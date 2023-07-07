@@ -4,7 +4,7 @@ import { getUserProfile } from "../utils/api";
 const SpotifyAuth = ({ callback, loggedIn, handleLogout, accessToken }) => {
   const authEndpoint = "https://accounts.spotify.com/authorize";
   const clientId = process.env.REACT_APP_CLIENT_ID;
-  const redirectUri = "http://localhost:3000";
+  const redirectUri = "http://localhost:3000/home";
   const scopes = [
     "user-library-read",
     "playlist-read-private",
@@ -61,11 +61,6 @@ const SpotifyAuth = ({ callback, loggedIn, handleLogout, accessToken }) => {
           alt="Profile"
           className="w-8 h-8 rounded-full mr-2"
         />
-      )}
-      {loggedIn && (
-        <span className="text-white text-lg font-bold pr-3">
-          Hi, {userName || "user"}.
-        </span>
       )}
       <button
         onClick={loggedIn ? handleLogout : handleLogin}

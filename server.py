@@ -200,9 +200,7 @@ def reorder_playlist():
         return {"message": "Playlist reordered successfully"}
     except Exception as e:
         return {"error": str(e)}
-
-
-
+    
 # this is a route to optimize the playlist that it is given
 @app.route('/optimize_playlist', methods=['POST'])
 def optimize_playlist():
@@ -277,39 +275,5 @@ def optimize_playlist():
 
     return jsonify(response_data), 200
 
-def sort_songs_by_cluster(clusters, songs):
-    # Create a dictionary to store songs within each cluster
-    clustered_songs = {cluster_id: [] for cluster_id in set(clusters)}
-
-    # Iterate over all songs and their corresponding cluster
-    for cluster_id, song in zip(clusters, songs):
-        clustered_songs[cluster_id].append(song)
-
-    # Sort songs within each cluster by tempo
-    for cluster_id in clustered_songs:
-        clustered_songs[cluster_id].sort(key=lambda x: x['tempo'])
-
-    return clustered_songs
-
-# or
-
-
-# def sort_songs_by_cluster(clusters, songs):
-#     # Sort songs within each cluster by tempo
-#     clustered_songs = {cluster_id: [] for cluster_id in range(max(clusters)+1)}
-#     for i, song in enumerate(songs):
-#         clustered_songs[clusters[i]].append((song, song['tempo']))
-#     for cluster_id in clustered_songs:
-#         clustered_songs[cluster_id].sort(key=lambda x: x[1])
-
-#     # Create a playlist with songs ordered by cluster
-#     sorted_playlist = []
-#     for cluster_id in range(max(clusters)+1):
-#         for song, _ in clustered_songs[cluster_id]:
-#             sorted_playlist.append(song)
-
-#     return sorted_playlist
-
-
 if __name__ == "__main__":
-    app.run(host='0.0.0.0',port=5001)
+    app.run()
