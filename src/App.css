@@ -41,3 +41,7 @@
     transform: rotate(360deg);
   }
 }
+
+button.shifted {
+  transform: translate(-10px, -10px);
+}

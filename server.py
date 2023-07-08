@@ -176,11 +176,6 @@ def find_best_transition(single_track, playlist_tracks):
 
     return best_transition_track
 
-
-single = get_song_data('7rXDc2ImBGwcypUFbNqbFB')
-playlist_tracks = get_all_playlist_tracks('1cIQhGIBuinwjm2O2BxliL')
-print(playlist_tracks)
-
 @app.route('/find_best_transition', methods=['POST'])
 def find_best_transition():
     data = request.get_json()

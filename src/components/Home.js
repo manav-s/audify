@@ -1,49 +1,49 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { InformationCircleIcon } from "@heroicons/react/outline";
 import InfoDialog from "./InfoDialog";
-import LoadingOverlay from "./LoadingOverlay";
 import SpotifyAuth from "./SpotifyAuth";
 import OptimizedPlaylist from "./OptimizedPlaylist";
 import ErrorDialog from "./ErrorDialog";
 import PlaylistForm from "./PlaylistForm";
 import axios from "axios";
-
 import { optimizePlaylist, reorderPlaylist } from "../utils/api";
+import { css } from "@emotion/react";
+import { ScaleLoader } from "react-spinners";
 
 const Home = () => {
   // Define states for the component
-  const [playlistLink, setPlaylistLink] = useState(""); // The link to the playlist to be optimized
-  const [open, setOpen] = useState(false); // Boolean to control the display of the optimized playlist
-  const [errorOpen, setErrorOpen] = useState(false); // Boolean to control the display of any errors
-  const [optimalPlaylist, setOptimalPlaylist] = useState([]); // The optimized playlist
-  const [loading, setLoading] = useState(false); // Boolean to control the display of a loading screen
-  const [loadingPhrase, setLoadingPhrase] = useState(""); // The phrase to be displayed while loading
-  const [accessToken, setAccessToken] = useState(""); // The access token for Spotify
-  const [refreshToken, setRefreshToken] = useState(""); // The refresh token for Spotify
-  const [cancelSource, setCancelSource] = useState(null); // The cancel token source for axios
-  const [infoDialogOpen, setInfoDialogOpen] = useState(false); // the boolean to open or close the information dialog
+  const [playlistLink, setPlaylistLink] = useState("");
+  const [open, setOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [optimalPlaylist, setOptimalPlaylist] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingPhrase, setLoadingPhrase] = useState("");
+  const [accessToken, setAccessToken] = useState("");
+  const [refreshToken, setRefreshToken] = useState("");
+  const [cancelSource, setCancelSource] = useState(null);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
 
   // The function to be called when the form is submitted
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Create a new cancel token
     const source = axios.CancelToken.source();
     setCancelSource(source);
-
+  
     // Check if the playlist link is a valid URL
     if (!playlistLink || !isValidURL(playlistLink)) {
       setErrorOpen(true);
       return;
     }
-
+  
     // Call your Flask backend API to get the optimized playlist
     try {
       setLoading(true);
       const response = await optimizePlaylist(playlistLink, source);
+      console.log("Response:", response); // Debugging statement
       setOptimalPlaylist(response.optimal_playlist);
       setOpen(true);
-      setLoading(false);
     } catch (error) {
       // Handle request cancellation and other errors
       if (axios.isCancel(error)) {
@@ -52,9 +52,12 @@ const Home = () => {
         console.error("Error fetching data:", error);
         setErrorOpen(true);
       }
-      setLoading(false);
+    } finally {
+      setLoading(false); // Set loading to false after the optimization process is complete
     }
   };
+  
+  
 
   // Cleanup function to cancel ongoing request when component unmounts
   useEffect(() => {
@@ -83,27 +86,6 @@ const Home = () => {
     "Comparing and contrasting genres...",
     "Finalizing the optimal playlist...",
     "Analyzing the vibe...",
-    "Dusting off the turntables...",
-    "Harmonizing melodies...",
-    "Syncing beats per minute...",
-    "Discovering hidden gems...",
-    "Shuffling the deck...",
-    "Fine-tuning the playlist...",
-    "Crossfading tracks...",
-    "Setting the groove...",
-    "Calculating the perfect mix...",
-    "Blending musical flavors...",
-    "Balancing energy levels...",
-    "Creating the ultimate auditory experience...",
-    "Matching moods and emotions...",
-    "Finding the right rhythm...",
-    "Mixing tempos and keys...",
-    "Preparing for the grand finale...",
-    "Optimizing track transitions...",
-    "Scouring the music archives...",
-    "Bringing the beat back...",
-    "Adding a touch of magic...",
-    "Curating the perfect setlist...",
   ];
 
   // Function to close the optimized playlist view
@@ -191,71 +173,71 @@ const Home = () => {
     if (loading) {
       let index = 0;
       interval = setInterval(() => {
-        // Set a new loading phrase every second
         setLoadingPhrase(loadingPhrases[index % loadingPhrases.length]);
         index++;
       }, 1000);
     }
 
-    // Clear the interval when the loading is done or component unmounts
     return () => clearInterval(interval);
   }, [loading]);
 
-  // This is the main rendering of the page
-  // Updated return part of Home component
-// Updated return part of Home component
-// Updated return part of Home component
-return (
-  <div className="overflow-hidden">
-    <div className="bg-black text-white min-h-screen flex flex-col items-center justify-center">
-      <SpotifyAuth
-        callback={handleAuthCode}
-        loggedIn={isLoggedIn()}
-        handleLogout={handleLogout}
-        accessToken={accessToken}
+  const override = css`
+    display: block;
+    margin: 0 auto;
+  `;
+
+  return (
+    <div className="overflow-hidden">
+      <div className="bg-black text-white min-h-screen flex flex-col items-center justify-center">
+        <SpotifyAuth
+          callback={handleAuthCode}
+          loggedIn={isLoggedIn()}
+          handleLogout={handleLogout}
+          accessToken={accessToken}
+        />
+
+        <h1 className="text-5xl font-extrabold mb-4 text-green-400">Audify.</h1>
+        <h2 className="mb-8 font-bold text-slate-300 text-lg">
+          Generate the perfect set with powerful machine learning algorithms
+        </h2>
+
+        <PlaylistForm
+          playlistLink={playlistLink}
+          setPlaylistLink={setPlaylistLink}
+          handleSubmit={handleSubmit}
+        />
+
+        <InformationCircleIcon
+          onClick={() => setInfoDialogOpen(true)}
+          className="absolute bottom-4 h-10 w-10 text-white hover:text-green-400"
+        />
+      </div>
+
+      {loading && !open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
+          <div className="flex items-center justify-center">
+            <ScaleLoader color="#ffffff" loading={true} css={override} />
+            <h3 className="text-white text-xl ml-4">{loadingPhrase}</h3>
+          </div>
+        </div>
+      )}
+
+      <OptimizedPlaylist
+        open={open}
+        optimalPlaylist={optimalPlaylist}
+        handleClose={handleClose}
+        isLoggedIn={isLoggedIn()}
+        modifyPlaylist={modifyPlaylist}
       />
 
-      <h1 className="text-5xl font-extrabold mb-4 text-green-400">Audify.</h1>
-      <h2 className="mb-8 font-bold text-slate-300 text-lg">
-        Generate the perfect set with powerful machine learning algorithms
-      </h2>
+      {errorOpen && <ErrorDialog handleErrorClose={handleErrorClose} />}
 
-      <PlaylistForm
-        playlistLink={playlistLink}
-        setPlaylistLink={setPlaylistLink}
-        handleSubmit={handleSubmit}
-      />
-
-      <InformationCircleIcon
-        onClick={() => setInfoDialogOpen(true)}
-        className="absolute bottom-4 h-10 w-10 text-white hover:text-green-400"
+      <InfoDialog
+        open={infoDialogOpen}
+        onClose={() => setInfoDialogOpen(false)}
       />
     </div>
-
-    {loading && !open && (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
-          <h3 className="text-white text-xl ml-4">Optimizing Playlist....</h3>
-        </div>
-      </div>
-    )}
-
-    <OptimizedPlaylist
-      open={open}
-      optimalPlaylist={optimalPlaylist}
-      handleClose={handleClose}
-      isLoggedIn={isLoggedIn()}
-      modifyPlaylist={modifyPlaylist}
-    />
-
-    {errorOpen && <ErrorDialog handleErrorClose={handleErrorClose} />}
-
-    <InfoDialog open={infoDialogOpen} onClose={() => setInfoDialogOpen(false)} />
-  </div>
-);
-
-
+  );
 };
 
 export default Home;
