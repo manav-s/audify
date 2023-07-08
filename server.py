@@ -181,6 +181,51 @@ single = get_song_data('7rXDc2ImBGwcypUFbNqbFB')
 playlist_tracks = get_all_playlist_tracks('1cIQhGIBuinwjm2O2BxliL')
 print(playlist_tracks)
 
+@app.route('/find_best_transition', methods=['POST'])
+def find_best_transition():
+    data = request.get_json()
+    single_track = data.get('single_track')
+    playlist_link = data.get('playlist_link')
+
+    if not single_track or not playlist_link:
+        return jsonify({"error": "Both single_track and playlist_link are required"}), 400
+
+    uri = playlist_link.split("/")[-1].split("?")[0]
+    playlist_tracks = [x["track"]["uri"] for x in get_all_playlist_tracks(uri)]
+
+    # Fetch song data in parallel
+    with ThreadPoolExecutor() as executor:
+        song_data_map = {song: data for song, data in zip(
+            playlist_tracks, executor.map(get_song_data, playlist_tracks)) if data is not None}
+
+    single_track_data = get_song_data(single_track)
+    transition_scores = {track: evaluate_transition(single_track_data, song_data) for track, song_data in song_data_map.items()}
+
+    best_transition_track = min(transition_scores, key=transition_scores.get)
+
+    # Get track details
+    track = sp.track(best_transition_track)
+    track_name = track["name"]
+    artist = track["artists"][0]["name"]
+
+    # Get tempo details
+    original_track_tempo = single_track_data['tempo']
+    best_track_tempo = song_data_map[best_transition_track]['tempo']
+
+    response_data = {
+        "original_track": {
+            "uri": single_track,
+            "tempo": original_track_tempo,
+        },
+        "best_transition_track": {
+            "track_name": track_name,
+            "artist": artist,
+            "uri": best_transition_track,
+            "tempo": best_track_tempo,
+        }
+    }
+
+    return jsonify(response_data), 200
 
 @app.route('/b2b_playlist', methods=['POST'])
 def generate_b2b_playlist():
