@@ -13,6 +13,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+app = Flask(__name__)
+CORS(app)
+
+cid = os.getenv("CLIENT_ID")
+secret = os.getenv("CLIENT_SECRET")
+
+client_credentials_manager = SpotifyClientCredentials(
+    client_id=cid, client_secret=secret)
+sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+
+
 def get_all_playlist_tracks(uri):
     offset = 0
     tracks = []
@@ -27,7 +38,6 @@ def get_all_playlist_tracks(uri):
             break
 
     return tracks
-
 
 def get_song_data(track_id):
     try:
@@ -45,7 +55,6 @@ def get_song_data(track_id):
     song_data['track_name'] = track['name']
     return song_data
 
-
 @lru_cache(maxsize=128)
 def get_related_artist_genres(artist_id):
     related_artists = sp.artist_related_artists(artist_id)
@@ -54,13 +63,11 @@ def get_related_artist_genres(artist_id):
         genres.extend(artist['genres'])
     return list(set(genres))
 
-
 def get_relative_key(key, mode):
     if mode == 1:  # Major key
         return (key + 9) % 12  # Relative minor key
     else:  # Minor key
         return (key + 3) % 12  # Relative major key
-
 
 def steps_in_circle_of_fifths(key1, key2):
     circle_of_fifths = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]
@@ -68,7 +75,6 @@ def steps_in_circle_of_fifths(key1, key2):
     index2 = circle_of_fifths.index(key2)
     steps = abs(index1 - index2)
     return min(steps, 12 - steps)
-
 
 def key_compatibility(key1, mode1, key2, mode2):
     if key1 == key2:
@@ -85,13 +91,11 @@ def key_compatibility(key1, mode1, key2, mode2):
 
     return False
 
-
 def genre_similarity(genres1, genres2):
     if not genres1 or not genres2:
         return 0
     shared_genres = len(set(genres1).intersection(genres2))
     return min(shared_genres, 5)
-
 
 def evaluate_transition(song1, song2):
     score = 0
@@ -136,10 +140,8 @@ def evaluate_transition(song1, song2):
 
     return score
 
-
 def custom_distance(song1, song2):
     return evaluate_transition(song1, song2)
-
 
 def custom_clustering_algorithm(songs, n_clusters):
     # Calculate pairwise distances
@@ -157,16 +159,107 @@ def custom_clustering_algorithm(songs, n_clusters):
 
     return clusters
 
+def find_best_transition(single_track, playlist_tracks):
+    # Fetch song data in parallel
+    with ThreadPoolExecutor() as executor:
+        song_data_map = {song: data for song, data in zip(
+            playlist_tracks, executor.map(get_song_data, playlist_tracks)) if data is not None}
 
-app = Flask(__name__)
-CORS(app)
+    single_track_data = get_song_data(single_track)
+    transition_scores = {track: evaluate_transition(
+        single_track_data, song_data) for track, song_data in song_data_map.items()}
 
-cid = os.getenv("CLIENT_ID")
-secret = os.getenv("CLIENT_SECRET")
+    best_transition_track_uri = min(
+        transition_scores, key=transition_scores.get)
 
-client_credentials_manager = SpotifyClientCredentials(
-    client_id=cid, client_secret=secret)
-sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+    best_transition_track = sp.track(best_transition_track_uri)
+
+    return best_transition_track
+
+
+single = get_song_data('7rXDc2ImBGwcypUFbNqbFB')
+playlist_tracks = get_all_playlist_tracks('1cIQhGIBuinwjm2O2BxliL')
+print(playlist_tracks)
+
+
+@app.route('/b2b_playlist', methods=['POST'])
+def generate_b2b_playlist():
+    data = request.get_json()
+    playlist1_link = data.get('playlist1_link')
+    playlist2_link = data.get('playlist2_link')
+
+    if not playlist1_link or not playlist2_link:
+        return jsonify({"error": "Both playlist1_link and playlist2_link are required"}), 400
+
+    # Get track URIs from playlist1
+    playlist1_uri = playlist1_link.split("/")[-1].split("?")[0]
+    playlist1_tracks = [x["track"]["uri"]
+                        for x in get_all_playlist_tracks(playlist1_uri)]
+
+    # Get track URIs from playlist2
+    playlist2_uri = playlist2_link.split("/")[-1].split("?")[0]
+    playlist2_tracks = [x["track"]["uri"]
+                        for x in get_all_playlist_tracks(playlist2_uri)]
+
+    if not playlist1_tracks or not playlist2_tracks:
+        return jsonify({"error": "One or both playlists are empty or not accessible"}), 400
+
+    b2b_playlist = []
+
+    # Start with the first track from playlist1
+    current_track = playlist1_tracks[0]
+    b2b_playlist.append(sp.track(current_track))
+
+    # Iterate through playlist2 and playlist1 alternately
+    while playlist2_tracks:
+        try:
+            best_transition_track = find_best_transition(
+                current_track, playlist2_tracks)
+            b2b_playlist.append(best_transition_track)
+
+            # Remove the used track from playlist2
+            playlist2_tracks.remove(best_transition_track['uri'])
+
+            if playlist1_tracks:
+                # Find the best track from playlist1 excluding the current track
+                current_track = playlist1_tracks[0]
+                playlist1_tracks.remove(current_track)
+        except SpotifyException as e:
+            return jsonify({"error": str(e)}), 500
+
+    # Build the response
+    response_data = {
+        "b2b_playlist": []
+    }
+
+    for i, track in enumerate(b2b_playlist):
+        position = i + 1
+        track_name = track["name"]
+        artist = track["artists"][0]["name"]
+        album_name = track["album"]["name"]
+
+        try:
+            album_cover = track["album"]["images"][0]["url"]
+        except IndexError:
+            album_cover = None
+
+        popularity = track["popularity"]
+        tempo = track["tempo"]
+        danceability = track["danceability"]
+
+        response_data["b2b_playlist"].append({
+            "position": position,
+            "track_name": track_name,
+            "artist": artist,
+            "album_name": album_name,
+            "album_cover": album_cover,
+            "popularity": popularity,
+            "tempo": tempo,
+            "danceability": danceability,
+            "uri": track["uri"],
+        })
+
+    return jsonify(response_data), 200
 
 # this is a path to reorder the playlist
 @app.route('/reorder_playlist', methods=['POST'])
@@ -185,7 +278,7 @@ def reorder_playlist():
     # Create a new Spotipy instance with the existing app credentials and the user's access token
     sp_user = spotipy.Spotify(
         client_credentials_manager=client_credentials_manager, auth=access_token)
-    
+
     try:
         # Clear the playlist
         sp_user.playlist_replace_items(playlist_id, [])
@@ -200,8 +293,7 @@ def reorder_playlist():
         return {"message": "Playlist reordered successfully"}
     except Exception as e:
         return {"error": str(e)}
-    
-# this is a route to optimize the playlist that it is given
+
 @app.route('/optimize_playlist', methods=['POST'])
 def optimize_playlist():
     data = request.get_json()
@@ -251,7 +343,7 @@ def optimize_playlist():
         track_name = track["name"]
         artist = track["artists"][0]["name"]
         album_name = track["album"]["name"]
-        
+
         try:
             album_cover = track["album"]["images"][0]["url"]
         except IndexError:
@@ -275,5 +367,119 @@ def optimize_playlist():
 
     return jsonify(response_data), 200
 
+
+@app.route('/generate_warmup', methods=['POST'])
+def generate_warmup():
+    data = request.get_json()
+    playlist_link = data.get('playlist_link')
+    if not playlist_link:
+        return jsonify({"error": "playlist_link is required"}), 400
+
+    uri = playlist_link.split("/")[-1].split("?")[0]
+    track_uris = [x["track"]["uri"] for x in get_all_playlist_tracks(uri)]
+
+    # Fetch song data in parallel
+    with ThreadPoolExecutor() as executor:
+        song_data_map = {song: data for song, data in zip(
+            track_uris, executor.map(get_song_data, track_uris)) if data is not None}
+
+    # Sort the songs by tempo and energy, in ascending order
+    warmup_songs = dict(sorted(song_data_map.items(), key=lambda item: (
+        item[1]['tempo'], item[1]['energy'])))
+
+    # Create response
+    response_data = {"warmup_playlist": []}
+
+    for i, song in enumerate(warmup_songs.keys()):
+        song_data = warmup_songs[song]
+        track = sp.track(song)  # Get the full track object
+
+        position = i + 1
+        track_name = track["name"]
+        artist = track["artists"][0]["name"]
+        album_name = track["album"]["name"]
+
+        try:
+            album_cover = track["album"]["images"][0]["url"]
+        except IndexError:
+            album_cover = None
+
+        popularity = track["popularity"]
+        tempo = song_data["tempo"]
+        danceability = song_data["danceability"]
+
+        response_data["warmup_playlist"].append({
+            "position": position,
+            "track_name": track_name,
+            "artist": artist,
+            "album_name": album_name,
+            "album_cover": album_cover,
+            "popularity": popularity,
+            "tempo": tempo,
+            "danceability": danceability,
+            "uri": song,
+        })
+
+    return jsonify(response_data), 200
+
+
+@app.route('/generate_cooldown', methods=['POST'])
+def generate_cooldown():
+    data = request.get_json()
+    playlist_link = data.get('playlist_link')
+    if not playlist_link:
+        return jsonify({"error": "playlist_link is required"}), 400
+
+    uri = playlist_link.split("/")[-1].split("?")[0]
+    track_uris = [x["track"]["uri"] for x in get_all_playlist_tracks(uri)]
+
+    # Fetch song data in parallel
+    with ThreadPoolExecutor() as executor:
+        song_data_map = {song: data for song, data in zip(
+            track_uris, executor.map(get_song_data, track_uris)) if data is not None}
+
+    # Filter out songs with tempo greater than 91
+    cooldown_songs = {song: data for song,
+                      data in song_data_map.items() if data['tempo'] <= 91}
+
+    # Sort the remaining songs by tempo and energy, in descending order
+    cooldown_songs = dict(sorted(cooldown_songs.items(), key=lambda item: (
+        item[1]['tempo'], item[1]['energy']), reverse=True))
+
+    # Create response
+    response_data = {"cooldown_playlist": []}
+
+    for i, song in enumerate(cooldown_songs.keys()):
+        song_data = cooldown_songs[song]
+        track = sp.track(song)  # Get the full track object
+
+        position = i + 1
+        track_name = track["name"]
+        artist = track["artists"][0]["name"]
+        album_name = track["album"]["name"]
+
+        try:
+            album_cover = track["album"]["images"][0]["url"]
+        except IndexError:
+            album_cover = None
+
+        popularity = track["popularity"]
+        tempo = song_data["tempo"]
+        danceability = song_data["danceability"]
+
+        response_data["cooldown_playlist"].append({
+            "position": position,
+            "track_name": track_name,
+            "artist": artist,
+            "album_name": album_name,
+            "album_cover": album_cover,
+            "popularity": popularity,
+            "tempo": tempo,
+            "danceability": danceability,
+            "uri": song,
+        })
+
+    return jsonify(response_data), 200
+    
 if __name__ == "__main__":
     app.run()
