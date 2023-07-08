@@ -20,7 +20,7 @@ const Welcome = () => {
         }`}
         onClick={handleAudifyClick}
       >
-        Audify.
+        Audify
       </button>
       <p className={`text-lg ${animationActive ? "animate-fade-black" : "text-white animate-pulse"}`}>
         Click Audify to get started
