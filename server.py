@@ -1,28 +1,28 @@
 import heapq
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import os
 import spotipy
+from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyClientCredentials
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
 from sklearn.cluster import AgglomerativeClustering
 from spotipy.exceptions import SpotifyException
 import numpy as np
-from dotenv import load_dotenv
+from flask_cors import CORS
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-cid = os.getenv("CLIENT_ID")
-secret = os.getenv("CLIENT_SECRET")
 
 client_credentials_manager = SpotifyClientCredentials(
-    client_id=cid, client_secret=secret)
-sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+    client_id=os.getenv("CLIENT_ID"),
+    client_secret=os.getenv("CLIENT_SECRET"),
+)
 
+sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 def get_all_playlist_tracks(uri):
     offset = 0
