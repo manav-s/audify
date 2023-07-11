@@ -4,7 +4,7 @@ import { getUserProfile } from "../utils/api";
 const SpotifyAuth = ({ callback, loggedIn, handleLogout, accessToken }) => {
   const authEndpoint = "https://accounts.spotify.com/authorize";
   const clientId = process.env.REACT_APP_CLIENT_ID;
-  const redirectUri = "http://localhost:3000/home";
+  const redirectUri = "https://audifyapp.netlify.app/home";
   const scopes = [
     "user-library-read",
     "playlist-read-private",

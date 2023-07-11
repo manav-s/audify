@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Define the base URL for your API
-const API_BASE_URL = "http://127.0.0.1:5000";
+const API_BASE_URL = "https://manavsharma57.pythonanywhere.com/";
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
 
