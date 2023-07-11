@@ -99,7 +99,7 @@ const Home = () => {
     setAccessToken("");
     setRefreshToken("");
     window.open("https://www.spotify.com/logout", "_blank"); // Log out of Spotify in a new tab
-    window.location = "https://audifyapp.netlify.app"; // Redirect the app to home
+    window.location = "https://audifyapp.netlify.app/home"; // Redirect the app to home
   };
 
   // Function to modify the original playlist based on the optimized order

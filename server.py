@@ -330,7 +330,7 @@ def reorder_playlist():
         for chunk in uri_chunks:
             sp_user.playlist_add_items(playlist_id, chunk)
 
-        return {"message": "Playlist reordered successfully"}
+        return {"message": "Playlist reordered successfully. However, if you don't have full access it may not be available to you. Please email sharma.manav@northeastern.edu so we can add you to authorized users."}
     except Exception as e:
         return {"error": str(e)}
 
