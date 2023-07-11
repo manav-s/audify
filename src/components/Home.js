@@ -146,7 +146,7 @@ const Home = () => {
           params: {
             grant_type: "authorization_code",
             code: authCode,
-            redirect_uri: "https://audifyapp.netlify.app/home",
+            redirect_uri: "https://audifyapp.netlify.app",
           },
         }
       );
