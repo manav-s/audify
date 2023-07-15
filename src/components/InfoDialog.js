@@ -67,6 +67,10 @@ const InfoDialog = ({ open, onClose }) => {
                   information. The result? A better organized playlist for your
                   enjoyment.
                   <br /> <br />
+                  Currently, this app is in Spotify development mode, so all the
+                  features are not unlocked for general users. Please email
+                  sharma.manav@northeastern.edu for free full access!
+                  <br /> <br />
                 </p>
                 <a
                   href="https://github.com/manav-s/audify"

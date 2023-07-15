@@ -15,6 +15,7 @@ Audify is a web application that optimizes Spotify playlists by minimizing the t
 ## Getting started
 
 ### Prerequisites:
+
 Node.js and npm (Node Package Manager)
 Python 3.7 or higher
 
@@ -26,15 +27,15 @@ To start using the app:
 4. Start the frontend by simply running 'npm start'
 5. Start the backend by running 'python server.py'
 
-
 ![Image 2](images/image-2.png)
 ![Image 3](images/image-3.png)
 
 ## How does it work?
 
 Audify is built using React for the frontend and Flask for the backend. The frontend provides a user interface to input the Spotify playlist link, while the backend handles the optimization process and interacts with the Spotify API.
-  
+
 ## Frontend Components
+
 - LoadingOverlay: Displays a loading overlay while the playlist is being optimized.
 - SpotifyAuth: Handles Spotify authentication and provides login/logout functionality.
 - OptimizedPlaylist: Shows the optimized playlist with song details and offers the option to reorder the original playlist.
@@ -42,6 +43,7 @@ Audify is built using React for the frontend and Flask for the backend. The fron
 - PlaylistForm: Renders the form to input the Spotify playlist link.
 
 ## Backend Components
+
 - get_all_playlist_tracks(uri): Retrieves all tracks in a Spotify playlist given its URI.
 - get_song_data(track_id): Fetches the track information and audio features for a given track ID using the Spotify API.
 - get_related_artist_genres(artist_id): Gets the genres of related artists for a given artist ID.
@@ -55,6 +57,7 @@ Audify is built using React for the frontend and Flask for the backend. The fron
 - optimize_playlist(): Handles the endpoint to optimize a Spotify playlist by minimizing the transition cost between songs.
 
 ## Usage
+
 - Open Audify in your web browser by visiting http://localhost:3000.
 - Click on the "Login with Spotify" button to authorize Audify to access your Spotify account.
 - Input the link to the Spotify playlist you want to optimize in the provided form and click the "Optimize Playlist" button.
@@ -67,6 +70,6 @@ Enjoy your optimized playlist with minimized transition costs for a seamless lis
 Contributions are welcome! If you have any ideas, improvements, or bug fixes, please submit a pull request or open an issue on GitHub.
 
 ### Acknowledgements
+
 This project was inspired by the desire to create a better listening experience by optimizing the order of songs in a playlist.
 The application utilizes the Spotify API to fetch song information and audio features.
-

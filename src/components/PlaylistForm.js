@@ -17,7 +17,7 @@ const PlaylistForm = ({ playlistLink, setPlaylistLink, handleSubmit }) => {
       <input
         type="text"
         className="block w-full py-2 px-4 mb-4 rounded border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 text-black"
-        placeholder="Playlist Link"
+        placeholder="Paste a Spotify link here..."
         value={playlistLink}
         onChange={handleInputChange}
       />
