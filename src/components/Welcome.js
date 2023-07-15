@@ -8,7 +8,7 @@ const Welcome = () => {
   const handleAudifyClick = () => {
     setAnimationActive(true);
     setTimeout(() => {
-      navigate("/home");
+      navigate("/options");
     }, 2000); // Adjust the delay time as needed for the animation
   };
 

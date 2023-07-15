@@ -2,11 +2,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css';
 import Home from './components/Home';
 import Welcome from './components/Welcome';
-import ErrorDialog from './components/ErrorDialog';
-import InfoDialog from './components/InfoDialog';
-import LoadingOverlay from './components/LoadingOverlay';
-import OptimizedPlaylist from './components/OptimizedPlaylist';
-import PlaylistForm from './components/PlaylistForm';
+import Simcheck from './components/Simcheck';
+import Options from './components/Options';
+
 
 function App() {
   return (
@@ -15,6 +13,8 @@ function App() {
     <Routes>
     <Route path="/" element = {<Welcome />} />
     <Route path="/home" element={<Home/>}/>
+    <Route path="/options" element={<Options/>}/>
+    <Route path="/sim" element={<Simcheck/>}/>
     </Routes>
     </BrowserRouter>
     </>

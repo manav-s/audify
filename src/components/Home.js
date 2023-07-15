@@ -26,17 +26,17 @@ const Home = () => {
   // The function to be called when the form is submitted
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Create a new cancel token
     const source = axios.CancelToken.source();
     setCancelSource(source);
-  
+
     // Check if the playlist link is a valid URL
     if (!playlistLink || !isValidURL(playlistLink)) {
       setErrorOpen(true);
       return;
     }
-  
+
     // Call your Flask backend API to get the optimized playlist
     try {
       setLoading(true);
@@ -56,8 +56,8 @@ const Home = () => {
       setLoading(false); // Set loading to false after the optimization process is complete
     }
   };
-  
-  
+
+
 
   // Cleanup function to cancel ongoing request when component unmounts
   useEffect(() => {
