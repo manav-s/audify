@@ -42,7 +42,7 @@ Audify is built using React for the frontend and Flask for the backend. The fron
 - ErrorDialog: Displays an error message if any error occurs during the optimization process.
 - PlaylistForm: Renders the form to input the Spotify playlist link.
 
-## Backend Components
+## Backend Methods
 
 - get_all_playlist_tracks(uri): Retrieves all tracks in a Spotify playlist given its URI.
 - get_song_data(track_id): Fetches the track information and audio features for a given track ID using the Spotify API.
