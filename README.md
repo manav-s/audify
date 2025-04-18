@@ -1,6 +1,6 @@
 # Audify
 
-Please don't actually use this anymore. I stopped maintaining it and it may delete your playlists. sorry lol.
+Please don't actually use this anymore. I stopped maintaining it and it may delete your playlists. sorry lol. But here is what it did in it's heyday:
 
 Audify is a web application that optimizes Spotify playlists by minimizing the transition cost between songs. The transition cost is calculated based on the difference in various audio features of the songs. The application utilizes the Spotify API to fetch information about the songs and their audio features. This README provides an overview of the application, instructions to set it up, and details about its key components.
 
